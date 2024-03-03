@@ -19,7 +19,7 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
-    
+
     def get_str(self, key: str) -> str:
         '''for parametrizing Cache.get'''
         value = self._redis.get(key)
