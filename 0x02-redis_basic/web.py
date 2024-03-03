@@ -13,8 +13,8 @@ def count_url_access(method):
     """ counts number of times the url is accessed """
     @wraps(method)
     def wrapper(url):
-        cached_key = "cached:" + url
-        cached_data = store.get(cached_key)
+        c_key = "cached:" + url
+        cached_data = store.get(c_key)
         if cached_data:
             return cached_data.decode("utf-8")
 
@@ -22,11 +22,12 @@ def count_url_access(method):
         html = method(url)
 
         store.incr(count_key)
-        store.set(cached_key, html)
+        store.set(c_key, html)
 
-        store.expire(cached_key, 10)
+        store.expire(c_key, 10)
         return html
     return wrapper
+
 
 def project_info():
     ''' returns the projcet info '''
