@@ -4,6 +4,7 @@
 import redis
 import uuid
 from typing import Union, Callable, Optional
+from functools import wraps
 
 
 class Cache:
@@ -41,3 +42,57 @@ class Cache:
         except Exception:
             value = 0
         return value
+
+
+def call_history(method: Callable) -> Callable:
+    '''history of inputs and outputs'''
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        '''wrapper'''
+        input = str(args)
+        self._redis.rpush(method.__qualname__ + ":inputs", input)
+
+        output = str(method(self, *args, **kwargs))
+        self._redis.rpush(method.__qualname__ + ":outputs", output)
+        return output
+    return wrapper
+
+
+def replay(fn: Callable):
+    '''display the history of calls of a particular function.'''
+    r = redis.Redis()
+    func_name = fn.__qualname__
+    c = r.get(func_name)
+
+    try:
+        c = int(c.decode("utf-8"))
+    except Exception:
+        c = 0
+
+    print("{} was called {} times:".format(func_name, c))
+    inputs = r.lrange("{}:inputs".format(func_name), 0, -1)
+
+    outputs = r.lrange("{}:outputs".format(func_name), 0, -1)
+
+    for inp, outp in zip(inputs, outputs):
+        try:
+            inp = inp.decode("utf-8")
+        except Exception:
+            inp = ""
+        try:
+            outp = outp.decode("utf-8")
+        except Exception:
+            outp = ""
+        print("{}(*{}) -> {}".format(func_name, inp, outp))
+
+
+def count_calls(method: Callable) -> Callable:
+    '''for counting number for calls to the cache class'''
+    key = method.__qualname__
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        '''wrapper'''
+        self._redis.incr(key)
+        return method(self, *args, **kwargs)
+    return wrapper
