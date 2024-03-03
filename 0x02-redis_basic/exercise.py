@@ -38,7 +38,7 @@ class Cache:
 
     def __init__(self):
         """ INITIALIZATION """
-        self._redis = redis.Redis()
+        self._redis = redis.Redis(host='localhost', port=6379, db=0)
         self._redis.flushdb()
 
     @call_history
@@ -49,11 +49,6 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-    def get_str(self, key: str) -> str:
-        '''for parametrizing Cache.get'''
-        value = self._redis.get(key)
-        return value.decode("utf-8")
-
     def get(self, key: str,
             fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
         '''for converting the data to the desired format'''
@@ -61,6 +56,11 @@ class Cache:
         if fn:
             value = fn(value)
         return value
+
+    def get_str(self, key: str) -> str:
+        '''for parametrizing Cache.get'''
+        value = self._redis.get(key)
+        return value.decode("utf-8")
 
     def get_int(self, key: str) -> int:
         '''for parametrizing Cache.get with correct conversion function'''
