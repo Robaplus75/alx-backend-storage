@@ -3,6 +3,7 @@
 
 import redis
 import uuid
+from typing import Union
 
 
 class Cache:
