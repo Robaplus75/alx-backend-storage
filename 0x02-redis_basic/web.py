@@ -1,40 +1,34 @@
 #!/usr/bin/env python3
-"""
-tarker for the webcache
-"""
+""" Redis Module """
+
 import redis
 import requests
 from functools import wraps
+from typing import Callable
 
-store = redis.Redis()
+redis_ = redis.Redis()
 
 
-def count_url_access(method):
-    """ counts number of times the url is accessed """
+def count_requests(method: Callable) -> Callable:
+    """ counts requestts """
     @wraps(method)
     def wrapper(url):
-        cached_key = "cached:" + url
-        cached_data = store.get(cached_key)
-        if cached_data:
-            return cached_data.decode("utf-8")
+        """ wrapper func """
+        redis_.incr(f"count:{url}")
+        cached_html = redis_.get(f"cached:{url}")
 
-        count_key = "count:" + url
+        if cached_html:
+            return cached_html.decode('utf-8')
         html = method(url)
 
-        store.incr(count_key)
-        store.set(cached_key, html)
-        store.expire(cached_key, 10)
+        redis_.setex(f"cached:{url}", 10, html)
         return html
+
     return wrapper
 
 
-def project_info():
-    ''' returns the projcet info '''
-    return "Web file"
-
-
-@count_url_access
+@count_requests
 def get_page(url: str) -> str:
-    """ returns the html """
-    res = requests.get(url)
-    return res.text
+    """ gets html content """
+    req = requests.get(url)
+    return req.text
