@@ -6,6 +6,7 @@ import uuid
 from typing import Union, Callable, Optional
 from functools import wraps
 
+
 def call_history(method: Callable) -> Callable:
     '''history of inputs and outputs'''
     @wraps(method)
@@ -19,6 +20,7 @@ def call_history(method: Callable) -> Callable:
         return output
     return wrapper
 
+
 def count_calls(method: Callable) -> Callable:
     '''for counting number for calls to the cache class'''
     key = method.__qualname__
@@ -29,6 +31,7 @@ def count_calls(method: Callable) -> Callable:
         self._redis.incr(key)
         return method(self, *args, **kwargs)
     return wrapper
+
 
 class Cache:
     """ redis cache class """
